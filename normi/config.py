@@ -13,14 +13,13 @@ DEFAULT_FILE_CONTENT = [
     "max_function_in_file = 5",
     "epitech_header = true",
     "return_values_in_parenthese = true",
-    'forbidden_function = ["printf", "strlen"]',
+    'forbidden_function = []',
     "forbidden_comments_in_functions = true",
     "space_after_keyword = true",
     "space_after_coma = true",
-    "check_trailing_spaces = true",
     "requiere_void_when_no_args = true",
     "max_parameters_to_functions = 4",
-    "max_variable_per_function = false",
+    "max_variable_per_function = -1",
     "brackets_style = 'end_of_line'",
 ]
 
@@ -33,7 +32,6 @@ class Config:
         content = Utils.get_file_content(self.config_file)
         self.settings = toml.loads(content)
 
-    @classmethod
     def init_config(self):
         config_file = ".normi.toml"
         if os.path.exists(config_file):
@@ -46,3 +44,6 @@ class Config:
             f.write(line + '\n')
         f.close()
         print(f"Initialized {config_file} with success")
+
+    def get(self, param):
+        return self.settings[param]

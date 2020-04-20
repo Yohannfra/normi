@@ -22,3 +22,26 @@ class Utils:
         except:
             sys.exit(f"{fp} : could not open and read file")
         return fc
+
+    @classmethod
+    def check_if_is_text(self, pattern, line):
+        is_str = [False, False]
+        index = line.find(pattern[0])
+        i = 0
+
+        for char in line:
+            if char == "'":
+                is_str[0] = not is_str[0]
+            if char == '"':
+                is_str[1] = not is_str[1]
+            if i == index:
+                if is_str[0] or is_str[1]:
+                    if len(pattern) > 1:
+                        pattern.remove(pattern[0])
+                        return self.check_if_is_text(pattern, line)
+                    else:
+                        return True
+                else:
+                    return False
+            i += 1
+        return False
