@@ -1,8 +1,5 @@
 #!/usr/bin/python3
 
-import os
-from termcolor import colored
-import re
 import sys
 from normi.normi import Normi
 from normi.config import Config

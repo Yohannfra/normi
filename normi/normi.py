@@ -12,7 +12,8 @@ class Normi:
     def __init__(self, argv):
         self.file_list = list_files().walk(argv)
         self.error_printer = Error_printer()
-        self.config = Config(self.file_list['config'])
+        self.config = Config()
+        self.config.parse_config()
         self.makefile_checker = Makefile_checker(self.config, self.error_printer)
         self.source_checker = Source_checker(self.config, self.error_printer)
         self.header_checker = Header_checker(self.config, self.error_printer)

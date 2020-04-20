@@ -4,13 +4,10 @@ import os
 import sys
 
 BUILD_FILES = ['Makefile', 'makefile']
-CONFIG_FILES = '.normi.toml'
-
 
 class list_files():
     def __init__(self):
-        self. file_list = {'headers': [], 'source': [], 'build': [],
-                           'config': [], 'dir': []}
+        self. file_list = {'headers': [], 'source': [], 'build': [], 'dir': []}
 
     def __add_file_to_list(self, filename, dirname=""):
         if os.path.isdir(os.path.join(dirname, filename)):
@@ -21,8 +18,6 @@ class list_files():
             self.file_list['headers'].append(os.path.join(dirname, filename))
         elif filename in BUILD_FILES:
             self.file_list['build'].append(os.path.join(dirname, filename))
-        elif filename == CONFIG_FILES:
-            self.file_list['config'].append(os.path.join(dirname, filename))
 
     def __check_folder(self, folder):
         for dirname, dirnames, filenames in os.walk(folder):
@@ -35,11 +30,6 @@ class list_files():
         if self.file_list['source'] == [] and self.file_list['headers'] == [] \
                 and self.file_list['build'] == []:
             sys.exit("No file to check found")
-        if len(self.file_list['config']) > 1:
-            print("Found multiples config files : ", self.file_list['config'])
-            print("Using the first one")
-            while len(self.file_list['config']) > 1:
-                self.file_list['config'].pop()
 
     def walk(self, argv):
         if len(argv) > 1:
