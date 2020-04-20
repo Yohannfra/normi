@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from .list_files import list_files
 from .error_printing import Error_printer
