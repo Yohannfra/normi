@@ -8,6 +8,8 @@ from .checkers.header_checker import Header_checker
 from .checkers.source_checker import Source_checker
 from .checkers.makefile_checker import Makefile_checker
 
+from .constants import C_TYPES
+
 class Normi:
     def __init__(self, argv):
         self.file_list = list_files().walk(argv)

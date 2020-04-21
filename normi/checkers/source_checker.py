@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 
 from ..utils import Utils
-from ..constants import MAJOR, MINOR
+from ..constants import MAJOR, MINOR, C_TYPES
 import re
 
 class Source_checker:
     def __init__(self, config, error_printer):
+        global C_TYPES
+
         self.config = config
         self.error_printer = error_printer
+        C_TYPES = C_TYPES + self.config.get("additionnal_types")
 
     def __add_error(self, line, message, severity):
         self.error_printer.add_error(self.filename, "source",
@@ -92,7 +95,40 @@ class Source_checker:
                 self.__add_error(line_nb, "Return value must be in parenthese", MAJOR)
 
     def __check_if_line_is_declaration(self, fc, line_nb):
-        pass
+        global C_TYPES
+
+        last_line_is_declaration = self.line_is_declaration
+        for t in C_TYPES:
+            if re.findall(rf"^[ \t]+{t}", fc[line_nb]):
+                self.line_is_declaration = True
+                return
+        self.line_is_declaration = False
+        if not self.line_is_declaration and last_line_is_declaration:
+            if fc[line_nb] == "":
+                pass
+            elif line_nb > 0 and not re.findall(r";$", fc[line_nb - 1]):
+                self.line_is_declaration = True
+            else:
+                self.__add_error(line_nb,
+                                 "Line is not empty after declarations", MINOR)
+        if not self.line_is_declaration and not last_line_is_declaration:
+            if fc[line_nb] == "" and self.first_line_of_function > 0:
+                self.__add_error(line_nb,"Empty line", MINOR)
+
+    def __check_multiple_empty_lines(self, fc, line_nb):
+        if fc[line_nb] == "" and self.first_line_of_function < 1:
+            if line_nb < len(fc) - 1 and fc[line_nb + 1] == "" and \
+                    line_nb > 0 and fc[line_nb - 1] != "":
+                self.__add_error(line_nb,"Too many empty lines", MINOR)
+
+    def __check_misplaced_space(self, fc, line_nb):
+        if re.findall(" ;$", fc[line_nb]):
+                self.__add_error(line_nb,"Misplaced space before ';'", MINOR)
+        double_spaces = re.findall(r"[^ ]  [^\"]*", fc[line_nb])
+        if double_spaces and not Utils.check_if_is_text(double_spaces,
+                                                        fc[line_nb].lstrip()):
+            self.__add_error(line_nb,"Double space detected", MINOR)
+
 
     def __checkline(self, fc, line_nb):
         self.__check_trailing_whitespaces(fc, line_nb)
@@ -104,6 +140,8 @@ class Source_checker:
         self.__check_too_many_parameters(fc, line_nb)
         self.__check_return_value_in_parenthese(fc, line_nb)
         self.__check_if_line_is_declaration(fc, line_nb)
+        self.__check_multiple_empty_lines(fc, line_nb)
+        self.__check_misplaced_space(fc, line_nb)
 
     def run(self, file_list):
         for self.filename in file_list:

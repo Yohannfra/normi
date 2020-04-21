@@ -21,6 +21,7 @@ DEFAULT_FILE_CONTENT = [
     "max_parameters_to_functions = 4",
     "max_variable_per_function = -1",
     "brackets_style = 'end_of_line'",
+    "additionnal_types = []"
 ]
 
 class Config:
@@ -30,8 +31,13 @@ class Config:
 
     def parse_config(self):
         content = Utils.get_file_content(self.config_file)
-        self.settings = toml.loads(content)
+        if content == None:
+            self.settings = toml.loads("\n".join(DEFAULT_FILE_CONTENT))
+            print("Using default configuration")
+        else:
+            self.settings = toml.loads(content)
 
+    @classmethod
     def init_config(self):
         config_file = ".normi.toml"
         if os.path.exists(config_file):

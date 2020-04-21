@@ -14,13 +14,15 @@ class Utils:
             elif os.path.isdir(fp):
                 sys.exit(f"{fp} : is a directory")
         else:
-            sys.exit(f"{fp} : file not found")
+            print(f"{fp} : file not found")
+            return None
         try:
             f = open(fp, 'r')
             fc = f.read()
             f.close()
         except:
-            sys.exit(f"{fp} : could not open and read file")
+            print(f"{fp} : could not open and read file")
+            return None
         return fc
 
     @classmethod
