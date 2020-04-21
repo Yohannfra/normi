@@ -20,6 +20,7 @@ class Source_checker:
         self.nb_functions = 0
         self.line_is_declaration = False
         self.first_line_of_function = 0
+        self.is_a_comment = False
 
     def __check_epitech_header(self, fc):
         header = ["/*", "** EPITECH PROJECT, ", "** ",
@@ -124,24 +125,126 @@ class Source_checker:
     def __check_misplaced_space(self, fc, line_nb):
         if re.findall(" ;$", fc[line_nb]):
                 self.__add_error(line_nb,"Misplaced space before ';'", MINOR)
+
         double_spaces = re.findall(r"[^ ]  [^\"]*", fc[line_nb])
         if double_spaces and not Utils.check_if_is_text(double_spaces,
                                                         fc[line_nb].lstrip()):
             self.__add_error(line_nb,"Double space detected", MINOR)
 
+        space_before_coma = re.findall(r" ,", fc[line_nb])
+        if space_before_coma and \
+                not Utils.check_if_is_text(space_before_coma, fc[line_nb]):
+            self.__add_error(line_nb,"Misplaced space before ','", MINOR)
+
+    def __check_space_before_curly_bracket(self, fc, line_nb):
+        if re.findall(r"[^ ]\{[ ]*$", fc[line_nb]):
+            self.__add_error(line_nb,
+                             "Missing space before curly bracket", MINOR)
+
+    def __check_unicode_caracters(self, fc, line_nb):
+        if not fc[line_nb].isascii():
+            self.__add_error(line_nb, "Non ascii caracters detected", MINOR)
+
+    # Thanks to https://github.com/ronanboiteau/NormEZ for some of those regexes
+    def __check_operators_spaces(self, fc, line_nb):
+        regex_dict = {
+            '=' : r"[^\t&|=^><+\-*%\/! ]=[^=]|[^&|=^><+\-*%\/!]=[^= \n]",
+            '==': r"[^\t ]==|==[^ \n]",
+            '!=': r"[^\t ]!=|!=[^ \n]",
+            '<=': r"[^\t <]<=|[^<]<=[^ \n]",
+            '>=': r"[^\t >]>=|[^>]>=[^ \n]",
+            '&&': r"[^\t ]&&|&&[^ \n]",
+            '||': r"[^\t ]\|\||\|\|[^ \n]",
+            '+=': r"[^\t ]\+=|\+=[^ \n]",
+            '-=': r"[^\t ]-=|-=[^ \n]",
+            '*=': r"[^\t ]\*=|\*=[^ \n]",
+            '/=': r"[^\t ]\/=|\/=[^ \n]",
+            '%=': r"[^\t ]%=|%=[^ \n]",
+            '^': r"[^\t ]\^|\^[^ =\n]",
+            '>>': r"[^\t ]>>[^=]|>>[^ =\n]",
+            '<<': r"[^\t ]<<[^=]|<<[^ =\n]",
+            '>>=': r"[^\t ]>>=|>>=[^ \n]",
+            '<<=': r"[^\t ]<<=|<<=[^ \n]",
+            "+": r".\+\d|\d\+.",
+            "-": r".\-\d|\d\-.",
+            "/": r".\/\d|\d\/.",
+            "%": r".\%\d|\d\%.",
+        }
+        for k in regex_dict.keys():
+            if re.findall(regex_dict[k], fc[line_nb]):
+                self.__add_error(line_nb, f"Missing space arround '{k}'", MINOR)
+
+
+    def __check_bracket_at_end_of_line(self, fc, line_nb):
+        if re.findall(r"^[ ]+\{$", fc[line_nb]) and \
+                self.config.get('brackets_style') == 'end_of_line':
+            self.__add_error(line_nb,
+                        "Misplaced bracket at the begining of the line", MINOR)
+
+    def __check_forbidden_functions(self, fc, line_nb):
+        forbidden_functions = self.config.get('forbidden_functions')
+
+        for f in forbidden_functions:
+            reg = re.escape(str(f)) + r"\("
+            reg_not = "my_" + re.escape(str(f))
+            if re.findall(reg, fc[line_nb]) and \
+                    not re.findall(reg_not, fc[line_nb]):
+                self.__add_error(line_nb,
+                                 f"Forbidden function detected : '{f}'", MAJOR)
+
+    def __check_misplaced_pointer_symbol(self, fc, line_nb):
+        global C_TYPES
+
+        for t in C_TYPES:
+            if re.findall(rf"{t}\*", fc[line_nb]):
+                self.__add_error(line_nb, "Misplaced pointer symbol", MINOR)
+
+    def __check_indentation(self, fc, line_nb):
+        i = 0
+        for c in fc[line_nb]:
+            if c != ' ':
+                break
+            i += 1
+        if fc[line_nb][i] == '\t' and self.config.get('indent_style') == 'space':
+            self.__add_error(line_nb, "Tab detected in indentation", MINOR)
+        if i % 4 != 0:
+            self.__add_error(line_nb, "Bad indentation level", MINOR)
+        if i >= 4 * self.config.get('indent_size'):
+            self.__add_error(line_nb, "Indentation is too far", MINOR)
+
+    def __check_comment_within_function(self, fc, line_nb):
+        if "//" in fc[line_nb] and not Utils.check_if_is_text("//", fc[line_nb]) \
+            or "/*" in fc[line_nb] and not Utils.check_if_is_text("/*", fc[line_nb]):
+            if self.first_line_of_function > 0:
+                self.__add_error(line_nb,
+                                 "Forbiddent comment within a function", MINOR)
+            self.is_a_comment = True
+        else:
+            self.is_a_comment = False
+
 
     def __checkline(self, fc, line_nb):
-        self.__check_trailing_whitespaces(fc, line_nb)
-        self.__check_space_after_comma(fc, line_nb)
-        self.__check_space_after_keyword(fc, line_nb)
-        self.__check_function_lines(fc, line_nb)
-        self.__check_len_line(fc, line_nb)
-        self.__check_empty_parenthese(fc, line_nb)
-        self.__check_too_many_parameters(fc, line_nb)
-        self.__check_return_value_in_parenthese(fc, line_nb)
-        self.__check_if_line_is_declaration(fc, line_nb)
-        self.__check_multiple_empty_lines(fc, line_nb)
-        self.__check_misplaced_space(fc, line_nb)
+        self.__check_comment_within_function(fc, line_nb)
+        if not self.is_a_comment:
+            self.__check_multiple_empty_lines(fc, line_nb)
+            self.__check_if_line_is_declaration(fc, line_nb)
+            if fc[line_nb] != "":
+                self.__check_space_after_keyword(fc, line_nb)
+                self.__check_function_lines(fc, line_nb)
+                self.__check_trailing_whitespaces(fc, line_nb)
+                self.__check_space_after_comma(fc, line_nb)
+                self.__check_len_line(fc, line_nb)
+                self.__check_empty_parenthese(fc, line_nb)
+                self.__check_too_many_parameters(fc, line_nb)
+                self.__check_return_value_in_parenthese(fc, line_nb)
+                self.__check_misplaced_space(fc, line_nb)
+                self.__check_space_before_curly_bracket(fc, line_nb)
+                self.__check_unicode_caracters(fc, line_nb)
+                self.__check_operators_spaces(fc, line_nb)
+                self.__check_bracket_at_end_of_line(fc, line_nb)
+                self.__check_forbidden_functions(fc, line_nb)
+                self.__check_misplaced_pointer_symbol(fc, line_nb)
+                self.__check_indentation(fc, line_nb)
 
     def run(self, file_list):
         for self.filename in file_list:
