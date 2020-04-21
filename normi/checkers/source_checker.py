@@ -76,6 +76,24 @@ class Source_checker:
                 self.__add_error(line_nb, f"This function should take "\
                                  "'void' as argument", MINOR)
 
+    def __check_too_many_parameters(self, fc, line_nb):
+        if self.first_line_of_function - line_nb == 0:
+            count = fc[line_nb - 3].count(',')
+            if count > self.config.get('max_parameters_to_functions') - 1:
+                self.__add_error(line_nb, "This function takes more than "\
+                    f"{count} parameters", MAJOR)
+
+    def __check_return_value_in_parenthese(self, fc, line_nb):
+        if not self.config.get('return_values_in_parenthese'):
+            return
+        if re.findall(r"^[ ]{4}return[^a-zA-Z_]", fc[line_nb]) and \
+            re.findall(r"^[ ]{4}return[^;]", fc[line_nb]):
+            if not (re.findall(r"^[ ]{4}return \(", fc[line_nb])):
+                self.__add_error(line_nb, "Return value must be in parenthese", MAJOR)
+
+    def __check_if_line_is_declaration(self, fc, line_nb):
+        pass
+
     def __checkline(self, fc, line_nb):
         self.__check_trailing_whitespaces(fc, line_nb)
         self.__check_space_after_comma(fc, line_nb)
@@ -83,6 +101,9 @@ class Source_checker:
         self.__check_function_lines(fc, line_nb)
         self.__check_len_line(fc, line_nb)
         self.__check_empty_parenthese(fc, line_nb)
+        self.__check_too_many_parameters(fc, line_nb)
+        self.__check_return_value_in_parenthese(fc, line_nb)
+        self.__check_if_line_is_declaration(fc, line_nb)
 
     def run(self, file_list):
         for self.filename in file_list:
