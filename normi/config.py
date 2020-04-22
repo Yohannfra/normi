@@ -21,7 +21,8 @@ DEFAULT_FILE_CONTENT = [
     "max_parameters_to_functions = 4",
     "max_variable_per_function = -1",
     "brackets_style = 'end_of_line'",
-    "additionnal_types = []"
+    "additionnal_types = []",
+    "excluded_files = []"
 ]
 
 class Config:

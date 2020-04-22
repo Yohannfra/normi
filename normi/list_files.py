@@ -4,6 +4,7 @@ import os
 import sys
 
 BUILD_FILES = ['Makefile', 'makefile']
+IGNORED_DIRS = ['CMakeFiles', '.git']
 
 class list_files():
     def __init__(self):
@@ -25,6 +26,8 @@ class list_files():
                 self.__add_file_to_list(filename, dirname)
             if '.git' in dirnames:
                 dirnames.remove('.git')
+            if 'CMakeFiles' in dirnames:
+                dirnames.remove('CMakeFiles')
 
     def __check_errors(self):
         if self.file_list['source'] == [] and self.file_list['headers'] == [] \
